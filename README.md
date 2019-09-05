@@ -1,6 +1,7 @@
 # NodeBird SNS 만들기
 
-React Lecture(NodeBird SNS)
+[Inflearn: NodeBird SNS(React, Hooks, Next)
+](https://www.inflearn.com/course/react_nodebird/lecture/20841)
 
 # 0. Hello. Nest.js.
 
@@ -90,4 +91,5 @@ Next는 자체 라우터가 있음
 
 2.  pages 폴더 생성
 
-    -   pages 안에서 라우팅 알아서 처리(OhMyGod) 
+    -   pages 안에서 라우팅 알아서 처리(OhMyGod)
+        
