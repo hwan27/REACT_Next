@@ -1,13 +1,13 @@
-# SNS 제작하기
+# React Next: SNS 제작하기
 
 [Inflearn: NodeBird SNS(React, Hooks, Next)
 ](https://www.inflearn.com/course/react_nodebird/lecture/20841)
 
-# 0. 시작하기
+# 0. 시작
 
 선수강: React 무료강좌(hooks), Node 기본
 
-## 0.1. 개요
+## 0.1. 개요: 프로젝트 구조
 
 -   프론트 서버
     -   React, Next
@@ -44,7 +44,7 @@
 
     -   서버사이드렌더링과 코드스플릿을 동시에 구현하는 것이 매우 어렵기 때문에 Next를 활용한다(SPA의 공통적인 고민(Vue와 Nuxt))
 
-## 0.2. Next와 eslint 설치하기
+## 0.2. Next와 eslint 설치
 
 `front` 폴더에서 node 프로젝트를 시작한다(기본 설정)
 
@@ -159,9 +159,9 @@ export default About;
     -   code splitting: 활성화되어있는 페이지만 렌더링한다
     -   주소체계와 pages구조가 같지만, 배포용 프로덕트에서는 노출되지 않는다.
 
-## 0.4 AntDesign
+## 0.4 샘플디자인: AntDesign과 기본페이지 구성
 
-[참조 사이트(Antd)](https://ant.design/components/menu/)
+[AntD참조](https://ant.design/components/menu/)
 
 간편하게 미리 디자인이 설정되어 있다 (Bootstrap, SemanticUI, materialUI 등)
 
@@ -266,6 +266,8 @@ const Profile = () => {
 
 export default Profile;
 ```
+
+## 0.5. state와 hook(회원가입 페이지 만들기)
 
 ```js
 // signup.js
@@ -428,6 +430,8 @@ const useInput = (initValue = null) => {
 const [id, onChangeId] = useInput("");
 ```
 
+## 0.6. 렌더 최적화(useCallback, \_app.js, react.memo )
+
 -   `props`로 넘겨주는 함수들은 `useCallback`으로 감싸주는 것이 좋다.
     -   그렇지 않으면 `state`를 바꿀때마다 함수가 재생성되고, 새로 그려줘야한다
     -   `react dev tools`에서 `highlight updates`를 체크하면, 렌더링 상황을 확인 가능하다
@@ -463,10 +467,17 @@ const onChangeTerm = useCallback(e => {
 
 -   컴포넌트를 분리하여 최적화
 -   `pages` 폴더 안에 `_app.js`를 생성한다
+
     -   Next에서 `pages`안의 `_app.js`는 부모역할을 하는 공통 레이아웃을 제공한다.
     -   변경사항이 적용되지 않으면, `npm run dev`를 다시 실행
 
+-   `_document.js`: html, head, body
+-   `_app.js`: root(컴포넌트들을 렌더링할 루트)
+-   `pages`: 실제 컴포넌트
+-   `_error.js`: 에러 발생시 나타나는 화면
+
 ```js
+//pages/_app.js
 import React from "react";
 import Head from "next/head";
 import AppLayout from "../components/AppLayout";
@@ -503,4 +514,45 @@ const TextInput = memo({value, onChange}) => {
 }
 ...
 <TextInput value={id} onChange={onChangeId} />
+```
+
+## 1.1 PropTypes (SNS 화면 만들기)
+
+-   `PropTypes`를 이용하여 부모로부터 받은 올바른 자료형의 `props`를 받았는지 검사할 수 있다.
+
+    -   React에 들어갈 수 있는 모든 js형태를 `PropTypes.node`라고 한다
+    -   TypeScript는 자체 시스템이 있어서 `PropTypes`를 사용하지 않는다
+    -   [PropTypes 참고](https://www.npmjs.com/pacakage/prop-types)
+    -   `PropTypes`가 잘못되었을 경우, 실행은 되지만 콘솔창에 에러를 띄워준다
+
+-   `npm i prop-types`
+
+```js
+//PropTypes 예제(_app.js)
+import React from "react";
+import Head from "next/head";
+import AppLayout from "../components/AppLayout";
+import PropTypes from "prop-types";
+
+const NodeBird = ({ Component }) => {
+	return (
+		<>
+			<Head>
+				<title>NodeBird</title>
+				<link
+					rel="stylesheet"
+					href="https://cdnjs.cloudflare.com/ajax/libs/antd/3.18.1/antd.css"
+				/>
+			</Head>
+			<AppLayout>
+				<Component />
+			</AppLayout>
+		</>
+	);
+};
+
+NodeBird.PropTypes = {
+	Component: PropTypes.node
+};
+export default NodeBird;
 ```
