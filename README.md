@@ -430,7 +430,9 @@ const useInput = (initValue = null) => {
 const [id, onChangeId] = useInput("");
 ```
 
-## 0.6. 렌더 최적화(useCallback, \_app.js, react.memo )
+# 1. 화면 만들기
+
+## 1.1. 렌더 최적화(useCallback, \_app.js, react.memo )
 
 -   `props`로 넘겨주는 함수들은 `useCallback`으로 감싸주는 것이 좋다.
     -   그렇지 않으면 `state`를 바꿀때마다 함수가 재생성되고, 새로 그려줘야한다
@@ -516,7 +518,7 @@ const TextInput = memo({value, onChange}) => {
 <TextInput value={id} onChange={onChangeId} />
 ```
 
-## 1.1 PropTypes (SNS 화면 만들기)
+## 1.2. PropTypes (SNS 화면 만들기)
 
 -   `PropTypes`를 이용하여 부모로부터 받은 올바른 자료형의 `props`를 받았는지 검사할 수 있다.
 
@@ -555,4 +557,68 @@ NodeBird.PropTypes = {
 	Component: PropTypes.node
 };
 export default NodeBird;
+```
+
+## 1.3 antd 그리드시스템
+
+-   가로(`row`)로 나누고 그 다음 세로(`col`)로 나눈다
+-   `antd`는 기본적으로 반응형(전체 24 기준)
+
+    -   xs: 모바일
+    -   sm: 작은 화면
+    -   md: 중간 화면
+    -   lg: 큰 화면
+
+-   dummy: 백엔드없이 프론트가 먼저 완성되었을 경우 더미데이터를 만들어 객체를 가짜로 만들어준다
+    -   백엔드에서 미리 데이터구조를 정리, 문서화해놓고 더미로 만들어야함
+
+```js
+//AppLayout.js
+import {Row, Col, Card, Avatar} from 'antd';
+
+..
+
+const dummy = {
+    nickname: 'hwan',
+    Post: [],
+    Followings: [],
+    Followers: []
+}
+
+..
+
+<Row>
+				<Col xs={24} md={6}>
+					<Card
+						actions={[
+							<div key="twit">
+								짹짹
+								<br />
+								{dummy.Post.length}
+							</div>,
+							<div key="following">
+								팔로잉
+								<br />
+								{dummy.Followings.length}
+							</div>,
+							<div key="follower">
+								팔로워
+								<br />
+								{dummy.Followers.length}
+							</div>
+						]}
+					>
+						<Card.Meta
+							avatar={<Avatar>{dummy.nickname[0]}</Avatar>}
+							title={dummy.nickname}
+						/>
+					</Card>
+				</Col>
+				<Col xs={24} md={12}>
+					{children}
+				</Col>
+				<Col xs={24} md={6}>
+					세번째
+				</Col>
+			</Row>
 ```
