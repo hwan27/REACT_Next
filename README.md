@@ -522,7 +522,7 @@ const TextInput = memo({value, onChange}) => {
 
 -   `PropTypes`를 이용하여 부모로부터 받은 올바른 자료형의 `props`를 받았는지 검사할 수 있다.
 
-    -   React에 들어갈 수 있는 모든 js형태를 `PropTypes.node`라고 한다
+    -   React에 들어갈 수 있는 모든 js형태를 `PropTypes.node`라고 한다
     -   TypeScript는 자체 시스템이 있어서 `PropTypes`를 사용하지 않는다
     -   [PropTypes 참고](https://www.npmjs.com/pacakage/prop-types)
     -   `PropTypes`가 잘못되었을 경우, 실행은 되지만 콘솔창에 에러를 띄워준다
