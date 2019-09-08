@@ -1,20 +1,19 @@
 import React, { useState, useCallback } from "react";
 import { Form, Input, Checkbox, Button } from "antd";
-import PropTypes from "prop-types";
+
+export const useInput = (initValue = null) => {
+	const [value, setter] = useState(initValue);
+	const handler = useCallback(e => {
+		setter(e.target.value);
+	}, []);
+	return [value, handler];
+};
 
 const Signup = () => {
 	const [passwordCheck, setPasswordCheck] = useState("");
 	const [term, setTerm] = useState("");
 	const [passwordError, setPasswordError] = useState(false);
 	const [termError, setTermError] = useState(false);
-
-	const useInput = (initValue = null) => {
-		const [value, setter] = useState(initValue);
-		const handler = useCallback(e => {
-			setter(e.target.value);
-		}, []);
-		return [value, handler];
-	};
 
 	const [id, onChangeId] = useInput("");
 	const [nick, onChangeNick] = useInput("");
@@ -109,11 +108,11 @@ const Signup = () => {
 					>
 						동의합니다
 					</Checkbox>
-					{termError ? (
+					{termError && (
 						<div style={{ color: "red" }}>
 							약관에 동의하셔야 합니다.
 						</div>
-					) : null}
+					)}
 				</div>
 				<div style={{ marginTop: 10 }}>
 					<Button type="primary" htmlType="submit">

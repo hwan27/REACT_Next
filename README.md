@@ -576,7 +576,7 @@ export default NodeBird;
 //AppLayout.js
 import {Row, Col, Card, Avatar} from 'antd';
 
-..
+...
 
 const dummy = {
     nickname: 'hwan',
@@ -585,7 +585,7 @@ const dummy = {
     Followers: []
 }
 
-..
+...
 
 <Row>
 	<Col xs={24} md={6}>
@@ -606,3 +606,244 @@ const dummy = {
 	<Col xs={24} md={6}>세번째</Col>
 </Row>
 ```
+
+-   AppLayout에 로그인폼과 프로필폼을 만든다
+
+```js
+//AppLayout.js
+import React from "react";
+import { Menu, Input, Button, Row, Col, Card, Avatar, Form } from "antd";
+import Link from "next/link";
+import PropTypes from "prop-types";
+
+const dummy = {
+	nickname: "hwan",
+	Post: [],
+	Followings: [],
+	Followers: [],
+	isLoggedIn: false
+};
+
+const AppLayout = ({ children }) => {
+	return (
+		<div>
+			<Menu mode="horizontal">
+				<Menu.Item key="home">
+					<Link href="/">
+						<a>나비넷</a>
+					</Link>
+				</Menu.Item>
+				<Menu.Item key="profile">
+					<Link href="/profile">
+						<a>프로필</a>
+					</Link>
+				</Menu.Item>
+				<Menu.Item key="mail">
+					<Input.Search
+						enterButton
+						style={{ verticalAlign: "middle" }}
+					/>
+				</Menu.Item>
+			</Menu>
+			<Row>
+				<Col xs={24} md={6}>
+					{dummy.isLoggedIn ? (
+						<Card
+							actions={[
+								<div key="twit">
+									짹짹
+									<br />
+									{dummy.Post.length}
+								</div>,
+								<div key="following">
+									팔로잉
+									<br />
+									{dummy.Followings.length}
+								</div>,
+								<div key="follower">
+									팔로워
+									<br />
+									{dummy.Followers.length}
+								</div>
+							]}
+						>
+							<Card.Meta
+								avatar={<Avatar>{dummy.nickname[0]}</Avatar>}
+								title={dummy.nickname}
+							/>
+						</Card>
+					) : (
+						<Form>
+							<div>
+								<label htmlFor="user-id">아이디</label>
+								<br />
+								<Input name="user-id" required />
+							</div>
+							<div>
+								<label htmlFor="user-password">비밀번호</label>
+								<br />
+								<Input
+									name="user-password"
+									type="password"
+									required
+								/>
+							</div>
+							<div>
+								<Button
+									type="primary"
+									htmlType="submit"
+									loading={false}
+								>
+									로그인
+								</Button>
+
+								<Link href="/signup">
+									<a>
+										<Button>회원가입</Button>
+									</a>
+								</Link>
+							</div>
+						</Form>
+					)}
+				</Col>
+				<Col xs={24} md={12}>
+					{children}
+				</Col>
+				<Col xs={24} md={6}>
+					세번째
+				</Col>
+			</Row>
+		</div>
+	);
+};
+
+AppLayout.propTypes = {
+	children: PropTypes.node
+};
+
+export default AppLayout;
+```
+
+-   3항연산자로 스테이트 `isLoggedIn`이 `true`일 경우 프로필폼이, `false`일 경우 로그인폼이 렌더링되도록 한다.
+-   최적화를 위해 프로필폼과 로그인폼을 각각 컴포넌트로 따로 분리한다.
+
+```js
+//AppLayout.js
+<Col xs={24} md={6}>
+	{dummy.isLoggedIn ? <ProfileForm /> : <LoginForm />}
+</Col>
+```
+
+```js
+//LoginForm
+import React, { useState } from "react";
+import Link from "next/link";
+import { Form, Button, Input } from "antd";
+
+const LoginForm = () => {
+	<Form>
+		<div>
+			<label htmlFor="user-id">아이디</label>
+			<br />
+			<Input name="user-id" required />
+		</div>
+		<div>
+			<label htmlFor="user-password">비밀번호</label>
+			<br />
+			<Input name="user-password" type="password" required />
+		</div>
+		<div>
+			<Button type="primary" htmlType="submit" loading={false}>
+				로그인
+			</Button>
+
+			<Link href="/signup">
+				<a>
+					<Button>회원가입</Button>
+				</a>
+			</Link>
+		</div>
+	</Form>;
+};
+export default LoginForm;
+```
+
+-   `signup.js`에서 만든 커스텀 훅(`useInput`)을 로그인폼에서 재활용한다.
+-   `export const`로 `useInput`을 모듈화
+
+```js
+//signup.js
+export const useInput = (initValue = null) => {
+	const [value, setter] = useState(initValue);
+	const handler = useCallback(e => {
+		setter(e.target.value);
+	}, []);
+	return [value, handler];
+};
+```
+
+```js
+//LoginForm.js
+import React, { useCallback } from "react";
+import Link from "next/link";
+import { Form, Button, Input } from "antd";
+import { useInput } from "../pages/signup";
+
+const LoginForm = () => {
+	const [id, onChangeId] = useInput("");
+	const [password, onChangePassword] = useInput("");
+	const onSubmitForm = useCallback(
+		e => {
+			e.preventDefault();
+			console.log({ id, password });
+		},
+		[id, password]
+	);
+
+	return (
+		<Form onSubmit={onSubmitForm}>
+			<div>
+				<label htmlFor="user-id">아이디</label>
+				<br />
+				<Input
+					name="user-id"
+					value={id}
+					onChange={onChangeId}
+					required
+				/>
+			</div>
+			<div>
+				<label htmlFor="user-password">비밀번호</label>
+				<br />
+				<Input
+					name="user-password"
+					value={password}
+					onChange={onChangePassword}
+					type="password"
+					required
+				/>
+			</div>
+			<div>
+				<Button type="primary" htmlType="submit" loading={false}>
+					로그인
+				</Button>
+
+				<Link href="/signup">
+					<a>
+						<Button>회원가입</Button>
+					</a>
+				</Link>
+			</div>
+		</Form>
+	);
+};
+export default LoginForm;
+```
+
+gutter: Col간의 간격
+
+antd의 Icon은 Fontawsome과 같음
+
+배열안에 jsx를 넣을때는 key가 필수
+
+컴포넌트 분리: 조건문과 반복문을 기준으로
