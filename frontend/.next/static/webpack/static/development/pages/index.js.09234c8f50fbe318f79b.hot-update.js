@@ -1,0 +1,111 @@
+webpackHotUpdate("static/development/pages/index.js",{
+
+/***/ "./pages/index.js":
+/*!************************!*\
+  !*** ./pages/index.js ***!
+  \************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _components_PostForm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/PostForm */ "./components/PostForm.js");
+/* harmony import */ var _components_PostCard__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../components/PostCard */ "./components/PostCard.js");
+/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
+/* harmony import */ var _reducers_user__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../reducers/user */ "./reducers/user.js");
+var _jsxFileName = "/Users/changhwanoh/practice/js/React/NodeBird/frontend/pages/index.js";
+var __jsx = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement;
+
+
+
+
+
+var dummy = {
+  isLoggedIn: true,
+  imagePaths: [],
+  mainPosts: [{
+    User: {
+      id: 1,
+      nickname: "jenny"
+    },
+    content: "first post",
+    img: ""
+  }]
+};
+
+var Home = function Home(_ref) {
+  var user = _ref.user,
+      dispatch = _ref.dispatch,
+      login = _ref.login;
+  //const dispatch = useDispatch();
+  //const { isLoggedIn, user } = useSelector(state => state.user);
+  Object(react__WEBPACK_IMPORTED_MODULE_0__["useEffect"])(function () {
+    // dispatch(loginAction);
+    // dispatch({
+    // 	type: LOG_IN,
+    // 	data: {
+    // 		nickname: "hwan"
+    // 	}
+    // });
+    login();
+  }, []);
+  return __jsx("div", {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 37
+    },
+    __self: this
+  }, user ? __jsx("div", {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 39
+    },
+    __self: this
+  }, "\uB85C\uADF8\uC778\uD588\uC2B5\uB2C8\uB2E4 : ", user.nickname) : __jsx("div", {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 41
+    },
+    __self: this
+  }, "\uB85C\uADF8\uC544\uC6C3\uD588\uC2B5\uB2C8\uB2E4"), dummy.isLoggedIn && __jsx(_components_PostForm__WEBPACK_IMPORTED_MODULE_1__["default"], {
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 43
+    },
+    __self: this
+  }), dummy.mainPosts.map(function (c) {
+    return __jsx(_components_PostCard__WEBPACK_IMPORTED_MODULE_2__["default"], {
+      key: c,
+      post: c,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 45
+      },
+      __self: this
+    });
+  }));
+};
+
+function mapStateToProps(state) {
+  return {
+    user: state.user
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    login: function login() {
+      return dispatch(_reducers_user__WEBPACK_IMPORTED_MODULE_4__["loginAction"]);
+    }
+  };
+} //redux의 state와 dispatch를 component에 props로 넘겨주겠다
+
+
+/* harmony default export */ __webpack_exports__["default"] = (Object(react_redux__WEBPACK_IMPORTED_MODULE_3__["connect"])(mapStateToProps, mapDispatchToProps)(Home));
+
+/***/ })
+
+})
+//# sourceMappingURL=index.js.09234c8f50fbe318f79b.hot-update.js.map

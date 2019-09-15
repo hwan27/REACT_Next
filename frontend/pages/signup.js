@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { Form, Input, Checkbox, Button } from "antd";
+import { signUpAction } from "../reducers/user";
+import { useDispatch } from "react-redux";
 
 export const useInput = (initValue = null) => {
 	const [value, setter] = useState(initValue);
@@ -19,6 +21,8 @@ const Signup = () => {
 	const [nick, onChangeNick] = useInput("");
 	const [password, onChangePassword] = useInput("");
 
+	const dispatch = useDispatch();
+
 	const onSubmit = useCallback(
 		e => {
 			e.preventDefault();
@@ -28,13 +32,13 @@ const Signup = () => {
 			if (!term) {
 				return setTermError(true);
 			}
-			console.log({
-				id,
-				nick,
-				password,
-				passwordCheck,
-				term
-			});
+			dispatch(
+				signUpAction({
+					id,
+					password,
+					nick
+				})
+			);
 		},
 		[password, passwordCheck, term]
 	);
@@ -70,7 +74,7 @@ const Signup = () => {
 					<br />
 					<Input
 						name="user-nick"
-						vlaue={nick}
+						value={nick}
 						required
 						onChange={onChangeNick}
 					/>
@@ -79,6 +83,7 @@ const Signup = () => {
 					<label htmlFor="user-password">비밀번호</label>
 					<br />
 					<Input
+						type="password"
 						name="user-password"
 						value={password}
 						required
@@ -89,6 +94,7 @@ const Signup = () => {
 					<label htmlFor="user-password-check">비밀번호 체크</label>
 					<br />
 					<Input
+						type="password"
 						name="user-password-check"
 						value={passwordCheck}
 						required

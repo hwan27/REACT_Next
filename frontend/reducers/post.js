@@ -1,9 +1,19 @@
 export const initialState = {
-	mainPosts: []
+	mainPosts: [
+		{
+			User: {
+				id: 1,
+				nickname: "jenny"
+			},
+			content: "first post",
+			img: ""
+		}
+	],
+	imagePaths: []
 };
 
-const ADD_POST = "ADD_POST";
-const ADD_DUMMY = "ADD_DUMMY";
+export const ADD_POST = "ADD_POST";
+export const ADD_DUMMY = "ADD_DUMMY";
 
 const addPost = {
 	type: ADD_POST

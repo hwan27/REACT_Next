@@ -93,6 +93,7 @@
 -   `package.json`의 전체 모습은 다음과 같다
 
 ```js
+//package.json
 {
     "name": "react-nodebird-front",
     "version": "1.0.0",
@@ -169,7 +170,7 @@ export default About;
 -   `front/components`에 `AppLayout.js`를 생성한다
 
 ```js
-//AppLayout.js
+//components/AppLayout.js
 import React from "react";
 import { Menu, Input, Button } from "antd";
 import Link from "next/link";
@@ -211,7 +212,7 @@ export default AppLayout;
 -   `index.js`를 다음과 같이 수정한다
 
 ```js
-// index.js
+//pages/index.js
 import React from "react";
 import Link from "next/link";
 import AppLayout from "../components/AppLayout";
@@ -242,7 +243,7 @@ export default Home;
 -   `front/pages`에 `profile.js`와 `signup.js`를 생성한다
 
 ```js
-// profile.js
+//pages/profile.js
 import React from "react";
 import AppLayout from "../components/AppLayout";
 import Head from "next/head";
@@ -270,7 +271,7 @@ export default Profile;
 ## 0.5. state와 hook(회원가입 페이지 만들기)
 
 ```js
-// signup.js
+//pages/signup.js
 import React, { useState, useCallback } from "react";
 import AppLayout from "../components/AppLayout";
 import Head from "next/head";
@@ -413,7 +414,7 @@ export default Signup;
     -   개발할 때는 그냥 에러상태로 쓰다가 배포할 때 `webpack`을 이용해서 일괄적으로 삭제해줄 수 있다
 
 -   `hook`에 handler를 붙여서 커스텀해서 함수의 반복을 줄일 수 있다.
--   `hook`에 대한 내용은 [React 무료 강의](https://www.youtube.com/watch?v=V3QsSrldHqI&list=PLcqDmjxt30RtqbStQqk-eYMK8N-1SYIFn)참조
+-   `hook`에 대한 자세한 내용은 [React 무료 강의](https://www.youtube.com/watch?v=V3QsSrldHqI&list=PLcqDmjxt30RtqbStQqk-eYMK8N-1SYIFn)참조
 
 -   커스텀 훅 예제
 
@@ -573,7 +574,7 @@ export default NodeBird;
     -   백엔드에서 미리 데이터구조를 정리, 문서화해놓고 더미로 만들어야함
 
 ```js
-//AppLayout.js
+//components/AppLayout.js
 import {Row, Col, Card, Avatar} from 'antd';
 
 ...
@@ -610,7 +611,7 @@ const dummy = {
 -   AppLayout에 로그인폼과 프로필폼을 만든다
 
 ```js
-//AppLayout.js
+//components/AppLayout.js
 import React from "react";
 import { Menu, Input, Button, Row, Col, Card, Avatar, Form } from "antd";
 import Link from "next/link";
@@ -735,7 +736,7 @@ export default AppLayout;
 ```
 
 ```js
-//LoginForm
+//components/LoginForm
 import React, { useState } from "react";
 import Link from "next/link";
 import { Form, Button, Input } from "antd";
@@ -772,7 +773,7 @@ export default LoginForm;
 -   `export const`로 `useInput`을 모듈화
 
 ```js
-//signup.js
+//pages/signup.js
 export const useInput = (initValue = null) => {
 	const [value, setter] = useState(initValue);
 	const handler = useCallback(e => {
@@ -783,7 +784,7 @@ export const useInput = (initValue = null) => {
 ```
 
 ```js
-//LoginForm.js
+//components/LoginForm.js
 import React, { useCallback } from "react";
 import Link from "next/link";
 import { Form, Button, Input } from "antd";
@@ -848,6 +849,522 @@ antd의 Icon은 Fontawsome과 같음
 
 컴포넌트 분리: 조건문과 반복문을 기준으로
 
+## 1.4. 화면 만들기
+
+```js
+//pages/index.js
+import React from "react";
+import PostForm from "../components/PostForm";
+import PostCard from "../components/PostCard";
+
+const dummy = {
+	isLoggedIn: true,
+	imagePaths: [],
+	mainPosts: [
+		{
+			User: {
+				id: 1,
+				nickname: "hwan"
+			},
+			content: "첫 번째 게시글",
+			img
+		}
+	]
+};
+
+const Home = () => {
+	return (
+		<div>
+			{dummy.isLoggedIn && <PostForm />}
+			{dummy.mainPosts.map(c => {
+				return <PostCard key={c} post={c} />;
+			})}
+		</div>
+	);
+};
+
+export default Home;
+```
+
+```js
+//pages/signup.js
+import React, { useState, useCallback } from "react";
+import { Form, Input, Checkbox, Button } from "antd";
+import PropTypes from "prop-types";
+
+const TextInput = ({ value }) => {
+	return <div>{value}</div>;
+};
+
+TextInput.propTypes = {
+	value: PropTypes.string
+};
+
+export const useInput = (initValue = null) => {
+	const [value, setter] = useState(initValue);
+	const handler = useCallback(e => {
+		setter(e.target.value);
+	}, []);
+	return [value, handler];
+};
+
+const Signup = () => {
+	const [passwordCheck, setPasswordCheck] = useState("");
+	const [term, setTerm] = useState(false);
+	const [passwordError, setPasswordError] = useState(false);
+	const [termError, setTermError] = useState(false);
+
+	const [id, onChangeId] = useInput("");
+	const [nick, onChangeNick] = useInput("");
+	const [password, onChangePassword] = useInput("");
+
+	const onSubmit = useCallback(
+		e => {
+			e.preventDefault();
+			if (password !== passwordCheck) {
+				return setPasswordError(true);
+			}
+			if (!term) {
+				return setTermError(true);
+			}
+		},
+		[password, passwordCheck, term]
+	);
+
+	const onChangePasswordCheck = useCallback(
+		e => {
+			setPasswordError(e.target.value !== password);
+			setPasswordCheck(e.target.value);
+		},
+		[password]
+	);
+
+	const onChangeTerm = useCallback(e => {
+		setTermError(false);
+		setTerm(e.target.checked);
+	}, []);
+
+	return (
+		<>
+			<Form onSubmit={onSubmit} style={{ padding: 10 }}>
+				<TextInput value="135135" />
+				<div>
+					<label htmlFor="user-id">아이디</label>
+					<br />
+					<Input
+						name="user-id"
+						value={id}
+						required
+						onChange={onChangeId}
+					/>
+				</div>
+				<div>
+					<label htmlFor="user-nick">닉네임</label>
+					<br />
+					<Input
+						name="user-nick"
+						value={nick}
+						required
+						onChange={onChangeNick}
+					/>
+				</div>
+				<div>
+					<label htmlFor="user-password">비밀번호</label>
+					<br />
+					<Input
+						name="user-password"
+						type="password"
+						value={password}
+						required
+						onChange={onChangePassword}
+					/>
+				</div>
+				<div>
+					<label htmlFor="user-password-check">비밀번호체크</label>
+					<br />
+					<Input
+						name="user-password-check"
+						type="password"
+						value={passwordCheck}
+						required
+						onChange={onChangePasswordCheck}
+					/>
+					{passwordError && (
+						<div style={{ color: "red" }}>
+							비밀번호가 일치하지 않습니다.
+						</div>
+					)}
+				</div>
+				<div>
+					<Checkbox
+						name="user-term"
+						checked={term}
+						onChange={onChangeTerm}
+					>
+						동의합니다.
+					</Checkbox>
+					{termError && (
+						<div style={{ color: "red" }}>
+							약관에 동의하셔야 합니다.
+						</div>
+					)}
+				</div>
+				<div style={{ marginTop: 10 }}>
+					<Button type="primary" htmlType="submit">
+						가입하기
+					</Button>
+				</div>
+			</Form>
+		</>
+	);
+};
+
+export default Signup;
+```
+
+```js
+//pages/profile.js
+import React from "react";
+import { Button, List, Card, Icon } from "antd";
+import NicknameEditForm from "../components/NicknameEditForm";
+
+const Profile = () => {
+	return (
+		<div>
+			<NicknameEditForm />
+			<List
+				style={{ marginBottom: "20px" }}
+				grid={{ gutter: 4, xs: 2, md: 3 }}
+				size="small"
+				header={<div>팔로잉 목록</div>}
+				loadMore={<Button style={{ width: "100%" }}>더 보기</Button>}
+				bordered
+				dataSource={["제로초", "바보", "노드버드오피셜"]}
+				renderItem={item => (
+					<List.Item style={{ marginTop: "20px" }}>
+						<Card actions={[<Icon key="stop" type="stop" />]}>
+							<Card.Meta description={item} />
+						</Card>
+					</List.Item>
+				)}
+			/>
+			<List
+				style={{ marginBottom: "20px" }}
+				grid={{ gutter: 4, xs: 2, md: 3 }}
+				size="small"
+				header={<div>팔로워 목록</div>}
+				loadMore={<Button style={{ width: "100%" }}>더 보기</Button>}
+				bordered
+				dataSource={["제로초", "바보", "노드버드오피셜"]}
+				renderItem={item => (
+					<List.Item style={{ marginTop: "20px" }}>
+						<Card actions={[<Icon key="stop" type="stop" />]}>
+							<Card.Meta description={item} />
+						</Card>
+					</List.Item>
+				)}
+			/>
+		</div>
+	);
+};
+
+export default Profile;
+```
+
+```js
+//components/AppLayout.js
+import React from "react";
+import Link from "next/link";
+import PropTypes from "prop-types";
+import { Col, Input, Menu, Row } from "antd";
+import LoginForm from "./LoginForm";
+import UserProfile from "./UserProfile";
+
+const dummy = {
+	nickname: "제로초",
+	Post: [],
+	Followings: [],
+	Followers: [],
+	isLoggedIn: false
+};
+
+const AppLayout = ({ children }) => {
+	return (
+		<div>
+			<Menu mode="horizontal">
+				<Menu.Item key="home">
+					<Link href="/">
+						<a>노드버드</a>
+					</Link>
+				</Menu.Item>
+				<Menu.Item key="profile">
+					<Link href="/profile">
+						<a>프로필</a>
+					</Link>
+				</Menu.Item>
+				<Menu.Item key="mail">
+					<Input.Search
+						enterButton
+						style={{ verticalAlign: "middle" }}
+					/>
+				</Menu.Item>
+			</Menu>
+			<Row gutter={8}>
+				<Col xs={24} md={6}>
+					{dummy.isLoggedIn ? <UserProfile /> : <LoginForm />}
+				</Col>
+				<Col xs={24} md={12}>
+					{children}
+				</Col>
+				<Col xs={24} md={6}>
+					<Link href="https://www.zerocho.com">
+						<a target="_blank">Made by ZeroCho</a>
+					</Link>
+				</Col>
+			</Row>
+		</div>
+	);
+};
+
+AppLayout.propTypes = {
+	children: PropTypes.node
+};
+
+export default AppLayout;
+```
+
+```js
+//components/LoginForm.js
+
+import React, { useCallback } from "react";
+import { Button, Form, Input } from "antd";
+import Link from "next/link";
+import { useInput } from "../pages/signup"; // TODO: util 폴더로 옮기기
+
+const LoginForm = () => {
+	const [id, onChangeId] = useInput("");
+	const [password, onChangePassword] = useInput("");
+	const onSubmitForm = useCallback(
+		e => {
+			e.preventDefault();
+			console.log({
+				id,
+				password
+			});
+		},
+		[id, password]
+	);
+
+	return (
+		<Form onSubmit={onSubmitForm} style={{ padding: "10px" }}>
+			<div>
+				<label htmlFor="user-id">아이디</label>
+				<br />
+				<Input
+					name="user-id"
+					value={id}
+					onChange={onChangeId}
+					required
+				/>
+			</div>
+			<div>
+				<label htmlFor="user-password">비밀번호</label>
+				<br />
+				<Input
+					name="user-password"
+					value={password}
+					onChange={onChangePassword}
+					type="password"
+					required
+				/>
+			</div>
+			<div style={{ marginTop: "10px" }}>
+				<Button type="primary" htmlType="submit" loading={false}>
+					로그인
+				</Button>
+				<Link href="/signup">
+					<a>
+						<Button>회원가입</Button>
+					</a>
+				</Link>
+			</div>
+		</Form>
+	);
+};
+
+export default LoginForm;
+```
+
+```js
+//components/NickNameEditForm.js
+import { Button, Form, Input } from "antd";
+import React from "react";
+
+const NicknameEditForm = () => {
+	return (
+		<Form
+			style={{
+				marginBottom: "20px",
+				border: "1px solid #d9d9d9",
+				padding: "20px"
+			}}
+		>
+			<Input addonBefore="닉네임" />
+			<Button type="primary">수정</Button>
+		</Form>
+	);
+};
+
+export default NicknameEditForm;
+```
+
+```js
+//PostCard.js
+import React from "react";
+import { Card, Icon, Button, Avatar } from "antd";
+import PropTypes from "prop-types";
+
+const PostCard = ({ post }) => {
+	return (
+		<Card
+			key={+post.createdAt}
+			cover={post.img && <img alt="example" src={post.img} />}
+			actions={[
+				<Icon type="retweet" key="retweet" />,
+				<Icon type="heart" key="heart" />,
+				<Icon type="message" key="message" />,
+				<Icon type="ellipsis" key="ellipsis" />
+			]}
+			extra={<Button>팔로우</Button>}
+		>
+			<Card.Meta
+				avatar={<Avatar>{post.User.nickname[0]}</Avatar>}
+				title={post.User.nickname}
+				description={post.content}
+			/>
+		</Card>
+	);
+};
+
+PostCard.propTypes = {
+	post: PropTypes.shape({
+		User: PropTypes.object,
+		content: PropTypes.string,
+		img: PropTypes.string,
+		createdAt: PropTypes.object
+	})
+};
+
+export default PostCard;
+```
+
+```js
+//components/PostForm.js
+import React from "react";
+import { Form, Input, Button } from "antd";
+
+const dummy = {
+	isLoggedIn: true,
+	imagePaths: [],
+	mainPosts: [
+		{
+			User: {
+				id: 1,
+				nickname: "제로초"
+			},
+			content: "첫 번째 게시글",
+			img:
+				"https://bookthumb-phinf.pstatic.net/cover/137/995/13799585.jpg?udate=20180726"
+		}
+	]
+};
+
+const PostForm = () => {
+	return (
+		<Form style={{ margin: "10px 0 20px" }} encType="multipart/form-data">
+			<Input.TextArea
+				maxLength={140}
+				placeholder="어떤 신기한 일이 있었나요?"
+			/>
+			<div>
+				<input type="file" multiple hidden />
+				<Button>이미지 업로드</Button>
+				<Button
+					type="primary"
+					style={{ float: "right" }}
+					htmlType="submit"
+				>
+					짹짹
+				</Button>
+			</div>
+			<div>
+				{dummy.imagePaths.map((v, i) => {
+					return (
+						<div key={v} style={{ display: "inline-block" }}>
+							<img
+								src={"http://localhost:3065/" + v}
+								style={{ width: "200px" }}
+								alt={v}
+							/>
+							<div>
+								<Button>제거</Button>
+							</div>
+						</div>
+					);
+				})}
+			</div>
+		</Form>
+	);
+};
+
+export default PostForm;
+```
+
+```js
+//components/UserProfile.js
+import { Avatar, Card } from "antd";
+import React from "react";
+
+const dummy = {
+	nickname: "제로초",
+	Post: [],
+	Followings: [],
+	Followers: [],
+	isLoggedIn: false
+};
+
+const UserProfile = () => {
+	return (
+		<Card
+			actions={[
+				<div key="twit">
+					짹짹
+					<br />
+					{dummy.Post.length}
+				</div>,
+				<div key="following">
+					팔로잉
+					<br />
+					{dummy.Followings.length}
+				</div>,
+				<div key="follower">
+					팔로워
+					<br />
+					{dummy.Followers.length}
+				</div>
+			]}
+		>
+			<Card.Meta
+				avatar={<Avatar>{dummy.nickname[0]}</Avatar>}
+				title={dummy.nickname}
+			/>
+		</Card>
+	);
+};
+
+export default UserProfile;
+```
+
 # 2. 리덕스
 
 ## 2.1. 리덕스 주요 개념
@@ -896,7 +1413,7 @@ antd의 Icon은 Fontawsome과 같음
 
 ```js
 //reducers/user.js
-const initialState = {
+export const initialState = {
 	isLoggedIn: false,
 	user: {}
 };
@@ -937,6 +1454,8 @@ const reducer = (state = initialState, action) => {
 		}
 	}
 };
+
+export default reducer;
 ```
 
 ```js
@@ -1002,6 +1521,8 @@ const rootReducer = combineReducers({
 export default rootReducer;
 ```
 
+## 2.3. 리듀서와 리액트 연결하기
+
 -   스프레드문법: 불변성을 위해서 쓰지만, 가독성이 안좋아지고 코드가 복잡해짐 (이뮤터블, 이머로 보완)
 
 -   `provider`와 `store`를 활용하면 리덕스의 스테이트를 자식 컴포넌트들에게 나눠줄 수 있다.
@@ -1051,3 +1572,781 @@ export default withRedux((initialState, options) => {
 ```
 
 -   `default`에서 `return state`가 아니라 `return {...state}`를 하는 이유 - 리덕스에서 액션이 하나 실행되면 원칙적으로 새로운 스테이트를 생성해서 반환해줘야하기 때문 - `default`가 별 의미없기 때문에 사실상 큰 의미는 없다
+
+##2.4. Redux devtools
+
+크롬의 확장프로그램으로 설치한다
+
+-   어떤 액션이 실행되서 스테이트가 어떻게 바뀌었는지 볼 수 있다
+-   임으로 디스패치를 실행시켜볼 수 있다
+
+-   타임머신: 실행된 액션을 역추적
+
+-   다방: redux devtool이 일반인에게 노출되어 문제가 된적 있음
+
+-   middleware: store에서 액션 스테이트 리듀서의 과정에서 변조하거나 기능을 추가
+
+```js
+import { createStore, compose, applyMiddleware } from "redux";
+
+...
+
+export default withRedux((initialState, options) => {
+	const middlewares = [];
+	const enhancer = compose(
+		applyMiddleware(...middlewares),
+		!options.isServer && widonw.__REDUX__DEVTOOLS_EXTENSION__ !== "undefined"
+			? window.__REDUX__DEVTOOLS_EXTENSION__()
+			: f => f
+	);
+	const store = createStore(reducer, initialState, enhancer);
+	//store 커스터마이징
+	return store;
+})(NodeBird);
+```
+
+-   위의 미들웨어 설정부분은 탬플릿처럼 계속 사용하며 되며, 그때 그때 추가할 미들웨어만 `const middlewares = []` 부붙에 넣어주면 된다
+
+```js
+!options.isServer && widonw.__REDUX__DEVTOOLS_EXTENSION__ !== "undefined"
+	? window.__REDUX__DEVTOOLS_EXTENSION__()
+	: f => f;
+```
+
+-   이 함수는 리덕스 데브툴을 설치하면 사용할 수 있는 함수로 미들웨어에 리덕스 데브툴을 추가해준다
+
+## 2.5. react-redux 훅
+
+react-redux 7.1 이상 버전부터 훅을 사용할 수 있다
+
+-   connect 는 클래스 컴포넌트에만 쓰이고, 함수 컴포넌트는 모두 훅스로 처리
+
+-   액션을 리액트에서 디스패치하는 방법
+
+```js
+//page/index.js
+import React, { useEffect } from "react";
+import PostForm from "../components/PostForm";
+import PostCard from "../components/PostCard";
+import { useDispatch, useSelector } from "react-redux";
+import { LOG_IN, loginAction } from "../reducers/user";
+
+const dummy = {
+	isLoggedIn: true,
+	imagePaths: [],
+	mainPosts: [
+		{
+			User: {
+				id: 1,
+				nickname: "jenny"
+			},
+			content: "first post",
+			img: ""
+		}
+	]
+};
+
+const Home = () => {
+	const dispatch = useDispatch();
+	const { isLoggedIn, user } = useSelector(state => state.user);
+
+	useEffect(() => {
+		dispatch(loginAction);
+		dispatch({
+			type: LOG_IN,
+			data: {
+				nickname: "hwan"
+			}
+		});
+		//두 디스패치는 동일
+	}, []);
+	return (
+		<div>
+			{user ? (
+				<div>로그인했습니다 : {user.nickname}</div>
+			) : (
+				<div>로그아웃했습니다</div>
+			)}
+			{dummy.isLoggedIn && <PostForm />}
+			{dummy.mainPosts.map(c => {
+				return <PostCard key={c} post={c} />;
+			})}
+		</div>
+	);
+};
+
+export default Home;
+```
+
+-   useEffect에서 deps []를 비우면 componentDidMount와 동일
+-   useState가 useSelector로 useState의 setState가 disptch라고 생각하면 된다.
+
+## 2.6. react-redux-connect
+
+훅스 적용 이전에는 high-order component였다.
+
+-   클래스컴포넌트는 주로 connect를, 함수컴포넌트는 주로 hook을 사용한다
+-   니콜라스가 주로 사용했던 것
+
+```js
+//pages/index.js
+import React, { useEffect } from "react";
+import PostForm from "../components/PostForm";
+import PostCard from "../components/PostCard";
+import { useDispatch, useSelector, connect } from "react-redux";
+import { LOG_IN, loginAction } from "../reducers/user";
+
+const dummy = {
+	isLoggedIn: true,
+	imagePaths: [],
+	mainPosts: [
+		{
+			User: {
+				id: 1,
+				nickname: "jenny"
+			},
+			content: "first post",
+			img: ""
+		}
+	]
+};
+
+const Home = ({ user, dispatch, login }) => {
+	//const dispatch = useDispatch();
+	//const { isLoggedIn, user } = useSelector(state => state.user);
+
+	useEffect(() => {
+		// dispatch(loginAction);
+		// dispatch({
+		// 	type: LOG_IN,
+		// 	data: {
+		// 		nickname: "hwan"
+		// 	}
+		// });
+		login();
+	}, []);
+	return (
+		<div>
+			{user ? (
+				<div>로그인했습니다 : {user.nickname}</div>
+			) : (
+				<div>로그아웃했습니다</div>
+			)}
+			{dummy.isLoggedIn && <PostForm />}
+			{dummy.mainPosts.map(c => {
+				return <PostCard key={c} post={c} />;
+			})}
+		</div>
+	);
+};
+
+function mapStateToProps(state) {
+	return {
+		user: state.user
+	};
+}
+
+function mapDispatchToProps(dispatch) {
+	return {
+		login: () => dispatch(loginAction)
+	};
+}
+//redux의 state와 dispatch를 component에 props로 넘겨주겠다
+
+export default connect(
+	mapStateToProps,
+	mapDispatchToProps
+)(Home);
+```
+
+## 2.7. dummy데이터로 리덕스 사용
+
+-   성능최적화를 위해서 useSelector를 최대한 자주 사용해서 스테이트를 최대한 잘게 가져오는 것이 좋다
+
+-   너무 잘게 쪼개면 코드가 장황해지니 재량껏
+
+-   각 컴포넌트에 있는 더미데이터를 리덕스로 옮긴다
+
+```js
+const { user, isLoggedIn } = useSelector(state => state.user);
+```
+
+vs
+
+```js
+const user = useSelector(state => state.user.user);
+const isLoggedIn = useSelector(state => state.user.isLoggedIn);
+```
+
+```js
+//redux/post.js
+export const initialState = {
+	mainPosts: [
+		{
+			User: {
+				id: 1,
+				nickname: "jenny"
+			},
+			content: "first post",
+			img: ""
+		}
+	],
+	imagePaths: []
+};
+
+export const ADD_POST = "ADD_POST";
+export const ADD_DUMMY = "ADD_DUMMY";
+
+const addPost = {
+	type: ADD_POST
+};
+const addDummy = {
+	type: ADD_DUMMY,
+	data: {
+		content: "hello",
+		UserId: 1,
+		User: {
+			nickname: "hwan"
+		}
+	}
+};
+
+const reducer = (state = initialState, action) => {
+	switch (action.type) {
+		case ADD_POST: {
+			return {
+				...state
+			};
+		}
+		case ADD_DUMMY: {
+			return {
+				...state,
+				mainPosts: [action.data, ...state.mainPosts]
+			};
+		}
+		default: {
+			return {
+				...state
+			};
+		}
+	}
+};
+
+export default reducer;
+```
+
+```js
+//redux/user.js
+const dummyUser = {
+	nickname: "dummy",
+	Post: [],
+	Followings: [],
+	Followers: []
+};
+
+export const initialState = {
+	isLoggedIn: false,
+	user: null
+};
+
+export const LOG_IN = "LOG_IN"; //action의 이름
+export const LOG_OUT = "LOG_OUT";
+
+export const loginAction = {
+	type: LOG_IN
+}; //실제 action
+
+export const logoutAction = {
+	type: LOG_OUT
+};
+const reducer = (state = initialState, action) => {
+	switch (action.type) {
+		case LOG_IN: {
+			return {
+				...state,
+				isLoggedIn: true,
+				user: dummyUser
+			};
+		}
+		case LOG_OUT: {
+			return {
+				...state,
+				isLoggedOut: false,
+				user: null
+			};
+		}
+		default: {
+			return {
+				...state
+			};
+		}
+	}
+};
+
+export default reducer;
+```
+
+```js
+//components/UserProfile
+import React, { useCallback } from "react";
+import { Card, Avatar } from "antd";
+import { useSelector } from "react-redux";
+
+const UserProfile = props => {
+	const { user } = useSelector(state => state.user);
+	return (
+		<Card
+			actions={[
+				<div key="twit">
+					짹짹
+					<br />
+					{user.Post.length}
+				</div>,
+				<div key="following">
+					팔로잉
+					<br />
+					{user.Followings.length}
+				</div>,
+				<div key="follower">
+					팔로워
+					<br />
+					{user.Followers.length}
+				</div>
+			]}
+		>
+			<Card.Meta
+				avatar={<Avatar>{user.nickname[0]}</Avatar>}
+				title={user.nickname}
+			/>
+		</Card>
+	);
+};
+
+export default UserProfile;
+```
+
+```js
+//components/PostForm
+import React from "react";
+import { Form, Input, Button } from "antd";
+import { useSelector } from "react-redux";
+
+const PostForm = () => {
+	const { imagePaths } = useSelector(state => state.post);
+	return (
+		<Form style={{ margin: "10px 0 20px" }} encType="multipart/form-data">
+			<Input.TextArea
+				maxLength={140}
+				placeholder="포스트를 작성해주세요"
+			/>
+			<div>
+				<input type="file" multiple hidden />
+				<Button>이미지 업로드</Button>
+				<Button
+					type="primary"
+					style={{ float: "right" }}
+					htmlType="submit"
+				>
+					짹짹
+				</Button>
+			</div>
+			<div>
+				{imagePaths.map((v, i) => {
+					return (
+						<div key={v} style={{ display: "inline-block" }}>
+							<img
+								src={"http://localhost:3065/" + v}
+								style={{ width: "200px" }}
+								alt={v}
+							/>
+							<div>
+								<Button>제거</Button>
+							</div>
+						</div>
+					);
+				})}
+			</div>
+		</Form>
+	);
+};
+export default PostForm;
+```
+
+```js
+//components/AppLayout.js
+import React from "react";
+import { Menu, Input, Button, Row, Col, Card, Avatar, Form } from "antd";
+import Link from "next/link";
+import PropTypes from "prop-types";
+import LoginForm from "./LoginForm";
+import UserProfile from "./UserProfile";
+import { useSelector } from "react-redux";
+
+const AppLayout = ({ children }) => {
+	const { isLoggedIn } = useSelector(state => state.user);
+	return (
+		<div>
+			<Menu mode="horizontal">
+				<Menu.Item key="home">
+					<Link href="/">
+						<a>나비넷</a>
+					</Link>
+				</Menu.Item>
+				<Menu.Item key="profile">
+					<Link href="/profile">
+						<a>프로필</a>
+					</Link>
+				</Menu.Item>
+				<Menu.Item key="mail">
+					<Input.Search
+						enterButton
+						style={{ verticalAlign: "middle" }}
+					/>
+				</Menu.Item>
+			</Menu>
+			<Row gutter={8}>
+				<Col xs={24} md={6}>
+					{isLoggedIn ? <UserProfile /> : <LoginForm />}
+				</Col>
+				<Col xs={24} md={12}>
+					{children}
+				</Col>
+				<Col xs={24} md={6}>
+					<a>made by hwan</a>
+				</Col>
+			</Row>
+		</div>
+	);
+};
+
+AppLayout.propTypes = {
+	children: PropTypes.node
+};
+
+export default AppLayout;
+```
+
+```js
+//components/LoginForm.js
+import React, { useCallback } from "react";
+import Link from "next/link";
+import { Form, Button, Input } from "antd";
+import { useInput } from "../pages/signup";
+import { useDispatch } from "react-redux";
+import { loginAction } from "../reducers/user";
+
+const LoginForm = () => {
+	const [id, onChangeId] = useInput("");
+	const [password, onChangePassword] = useInput("");
+	const dispatch = useDispatch();
+
+	const onSubmitForm = useCallback(
+		e => {
+			e.preventDefault();
+			dispatch(loginAction);
+		},
+		[id, password]
+	);
+
+	return (
+		<Form onSubmit={onSubmitForm} style={{ padding: `10px` }}>
+			<div>
+				<label htmlFor="user-id">아이디</label>
+				<br />
+				<Input
+					name="user-id"
+					value={id}
+					onChange={onChangeId}
+					required
+				/>
+			</div>
+			<div>
+				<label htmlFor="user-password">비밀번호</label>
+				<br />
+				<Input
+					name="user-password"
+					value={password}
+					onChange={onChangePassword}
+					type="password"
+					required
+				/>
+			</div>
+			<div style={{ marginTop: 10 }}>
+				<Button type="primary" htmlType="submit" loading={false}>
+					로그인
+				</Button>
+
+				<Link href="/signup">
+					<a>
+						<Button>회원가입</Button>
+					</a>
+				</Link>
+			</div>
+		</Form>
+	);
+};
+export default LoginForm;
+```
+
+-   로그아웃 버튼
+
+```js
+//components/UserProfile.js
+import React, { useCallback } from "react";
+import { Card, Avatar, Button } from "antd";
+import { useSelector, useDispatch } from "react-redux";
+import { logoutAction } from "../reducers/user";
+
+const UserProfile = () => {
+	const { user } = useSelector(state => state.user);
+	const dispatch = useDispatch();
+	const onLogout = useCallback(() => {
+		dispatch(logoutAction);
+	}, []);
+	return (
+		<Card
+			actions={[
+				<div key="twit">
+					짹짹
+					<br />
+					{user.Post.length}
+				</div>,
+				<div key="following">
+					팔로잉
+					<br />
+					{user.Followings.length}
+				</div>,
+				<div key="follower">
+					팔로워
+					<br />
+					{user.Followers.length}
+				</div>
+			]}
+		>
+			<Card.Meta
+				avatar={<Avatar>{user.nickname[0]}</Avatar>}
+				title={user.nickname}
+			/>
+			<Button onClick={onLogout}>로그아웃</Button>
+		</Card>
+	);
+};
+
+export default UserProfile;
+```
+
+-   로그인 시 `UserProfileForm.js`를, 로그아웃 시 `LoginForm.js`를 보여준다
+
+```js
+//components/AppLayout.js
+
+const { isLoggedIn } = useSelector(state => state.user);
+...
+<Col xs={24} md={6}>
+					{isLoggedIn ? <UserProfile /> : <LoginForm />}
+</Col>
+```
+
+-   회원가입 액션
+
+```js
+//pages/signup.js
+import React, { useState, useCallback } from "react";
+import { Form, Input, Checkbox, Button } from "antd";
+import { signUpAction } from "../reducers/user";
+import { useDispatch } from "react-redux";
+
+export const useInput = (initValue = null) => {
+	const [value, setter] = useState(initValue);
+	const handler = useCallback(e => {
+		setter(e.target.value);
+	}, []);
+	return [value, handler];
+};
+
+const Signup = () => {
+	const [passwordCheck, setPasswordCheck] = useState("");
+	const [term, setTerm] = useState("");
+	const [passwordError, setPasswordError] = useState(false);
+	const [termError, setTermError] = useState(false);
+
+	const [id, onChangeId] = useInput("");
+	const [nick, onChangeNick] = useInput("");
+	const [password, onChangePassword] = useInput("");
+
+	const dispatch = useDispatch();
+	const onSubmit = useCallback(
+		e => {
+			e.preventDefault();
+			if (password !== passwordCheck) {
+				return setPasswordError(true);
+			}
+			if (!term) {
+				return setTermError(true);
+			}
+			dispatch(
+				signUpAction({
+					id,
+					password,
+					nick
+				})
+			);
+		},
+		[password, passwordCheck, term]
+	);
+
+	const onChangePasswordCheck = useCallback(
+		e => {
+			setPasswordError(e.target.value !== password);
+			setPasswordCheck(e.target.value);
+		},
+		[password]
+	);
+
+	const onChangeTerm = useCallback(e => {
+		setTermError(false);
+		setTerm(e.target.checked);
+	}, []);
+
+	return (
+		<>
+			<Form onSubmit={onSubmit} style={{ padding: 10 }}>
+				<div>
+					<label htmlFor="user-id">아이디</label>
+					<br />
+					<Input
+						name="user-id"
+						value={id}
+						required
+						onChange={onChangeId}
+					/>
+				</div>
+				<div>
+					<label htmlFor="user-nick">닉네임</label>
+					<br />
+					<Input
+						name="user-nick"
+						value={nick}
+						required
+						onChange={onChangeNick}
+					/>
+				</div>
+				<div>
+					<label htmlFor="user-password">비밀번호</label>
+					<br />
+					<Input
+						type="password"
+						name="user-password"
+						value={password}
+						required
+						onChange={onChangePassword}
+					/>
+				</div>
+				<div>
+					<label htmlFor="user-password-check">비밀번호 체크</label>
+					<br />
+					<Input
+						type="password"
+						name="user-password-check"
+						value={passwordCheck}
+						required
+						onChange={onChangePasswordCheck}
+					/>
+					{passwordError && (
+						<div style={{ color: "red" }}>
+							비밀번호가 일치하지 않습니다.
+						</div>
+					)}
+				</div>
+				<div>
+					<Checkbox
+						name="user-term"
+						checked={term}
+						onChange={onChangeTerm}
+					>
+						동의합니다
+					</Checkbox>
+					{termError && (
+						<div style={{ color: "red" }}>
+							약관에 동의하셔야 합니다.
+						</div>
+					)}
+				</div>
+				<div style={{ marginTop: 10 }}>
+					<Button type="primary" htmlType="submit">
+						가입하기
+					</Button>
+				</div>
+			</Form>
+		</>
+	);
+};
+
+export default Signup;
+```
+
+```js
+//reducers/user.js
+const dummyUser = {
+	nickname: "dummy",
+	Post: [],
+	Followings: [],
+	Followers: [],
+	signUpData: {}
+};
+
+export const initialState = {
+	isLoggedIn: false,
+	user: null
+};
+
+export const SIGN_UP = "SIGN_UP";
+export const LOG_IN = "LOG_IN"; //action의 이름
+export const LOG_OUT = "LOG_OUT";
+
+export const signUpAction = data => {
+	return { type: SIGN_UP, data: data };
+};
+export const loginAction = {
+	type: LOG_IN
+}; //실제 action
+
+export const logoutAction = {
+	type: LOG_OUT
+};
+const reducer = (state = initialState, action) => {
+	switch (action.type) {
+		case LOG_IN: {
+			return {
+				...state,
+				isLoggedIn: true,
+				user: dummyUser
+			};
+		}
+		case LOG_OUT: {
+			return {
+				...state,
+				isLoggedIn: false,
+				user: null
+			};
+		}
+		case SIGN_UP: {
+			return {
+				...state,
+				signUpData: action.data
+			};
+		}
+		default: {
+			return {
+				...state
+			};
+		}
+	}
+};
+
+export default reducer;
+```
+
+-   일반적으로 리액트 스테이트와 리덕스 스테이트는 같이 쓰게 된다.
+    -   리덕스 스테이트로만 만들 수 있지만 매우 번거롭기 때문에 사소한 스테이트는 리액트에서 관리
+    -   서버와 통신하거나 여러 컴포넌트가 쓰는 스테이트만 리덕스로 관리
