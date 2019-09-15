@@ -847,3 +847,207 @@ antd의 Icon은 Fontawsome과 같음
 배열안에 jsx를 넣을때는 key가 필수
 
 컴포넌트 분리: 조건문과 반복문을 기준으로
+
+# 2. 리덕스
+
+## 2.1. 리덕스 주요 개념
+
+-   dummy에 만들어놓은 데이터(state)를 관리하는 방법: `redux`, `mobax`, `graphql client`
+
+-   흩어져 있는 스테이트들을 하나로 모아서 컴포넌트마다 필요한 스테이트만 분배해줄 수 있다.
+
+*   `Redux(state)`를 사용하면 `React(state)`를 안써도 되지만, 훨씬 사용이 복잡하기 때문에 간단한 state는 `React(state)`를 사용한다.
+
+*   그럼에도 리덕스를 쓰는 이유: 안정성, state를 통제하기 쉬움,
+
+```js
+//Redux의 state
+{
+    isLoggedIn: false, // 로그인 여부 -> A 컴포넌트
+    user: {}, //로그인한 사용자 -> B, C 컴포넌트
+    mainPosts: [], //메인 게시글들 -> C 컴포넌트
+    ...
+}
+```
+
+-   action: state를 바꾸는 행동
+    ex) 로그인액션
+    
+-   dispatch: action을 실행
+    ex) 로그인액션 디스패치
+
+-   reducer: action의 결과로 state를 어떻게 바꿀지 정의
+    ex) 로그인액션 디스패치시 스테이트`isLoggedIn`을 `true`로 바꾼다
+
+-   store: state, action, reducer를 모두 합친 개념
+
+-   리덕스는 리액트만 한정한게 아니라 뷰, 앵귤러, 서버쪽 어플리케이션에도 쓸 수 있다.
+
+## 2.2. 리듀서 만들기
+
+-   `npm i redux react-redux`
+
+-   타임머신: action을 통해서만 state를 관리할 수 있고 action들의 기록이 다 남기 때문에, 이를 거슬러 올라가면 state의 변경을 추적할 수 있다.
+
+-   리덕스를 사용하면 코드가 장황해진다. (타임스크립트와 같이 쓰면 효과 두배로)
+
+-   store를 별개로 쪼개서 만들 수 있다.
+    -   대신 쪼개진 store를 감싸는 하나의 root store가 있어야 한다.
+
+```js
+//reducers/user.js
+const initialState = {
+	isLoggedIn: false,
+	user: {}
+};
+
+const LOG_IN = "LOG_IN"; //action의 이름
+const LOG_OUT = "LOG_OUT";
+
+const loginAction = {
+	type: LOG_IN,
+	data: {
+		nickname: "hwan"
+	}
+}; //실제 action
+
+const logoutAction = {
+	type: LOG_OUT
+};
+const reducer = (state = initialState, action) => {
+	switch (action.type) {
+		case LOG_IN: {
+			return {
+				...state,
+				isLoggedIn: true,
+				user: action.data
+			};
+		}
+		case LOG_OUT: {
+			return {
+				...state,
+				isLoggedOut: false,
+				user: null
+			};
+		}
+		default: {
+			return {
+				...state
+			};
+		}
+	}
+};
+```
+
+```js
+// reducers/post.js
+export const initialState = {
+	mainPosts: []
+};
+
+const ADD_POST = "ADD_POST";
+const ADD_DUMMY = "ADD_DUMMY";
+
+const addPost = {
+	type: ADD_POST
+};
+const addDummy = {
+	type: ADD_DUMMY,
+	data: {
+		content: "hello",
+		UserId: 1,
+		User: {
+			nickname: "hwan"
+		}
+	}
+};
+
+const reducers = (state = initialState, action) => {
+	switch (action.type) {
+		case ADD_POST: {
+			return {
+				...state
+			};
+		}
+		case ADD_DUMMY: {
+			return {
+				...state,
+				mainPosts: [action.data, ...state.mainPosts]
+			};
+		}
+		default: {
+			return {
+				...state
+			};
+		}
+	}
+};
+
+export default reducer;
+```
+
+-   루트리듀서를 만들어서 유저리듀서와 포스트유저서를 통합해 관리한다.
+
+```js
+// reducers/index.js
+import { combineReducers } from "redux";
+import user from "./user";
+import post from "./post";
+
+const rootReducer = combineReducers({
+	user,
+	post
+});
+
+export default rootReducer;
+```
+
+-   스프레드문법: 불변성을 위해서 쓰지만, 가독성이 안좋아지고 코드가 복잡해짐 (이뮤터블, 이머로 보완)
+
+-   `provider`와 `store`를 활용하면 리덕스의 스테이트를 자식 컴포넌트들에게 나눠줄 수 있다.
+
+-   리엑트와 넥스트에서 리덕스 사용하는 용법이 조금 다르다
+
+    -   `npm i next-redux-wrapper`
+    -   component에 props로 store를 넣어줌
+
+```js
+//_app.js
+import React from "react";
+import Head from "next/head";
+import AppLayout from "../components/AppLayout";
+import PropTypes from "prop-types";
+import { Provider } from "react-redux";
+import reducer from "../reducers";
+import withRedux from "next-redux-wrapper";
+import { createStore } from "redux";
+
+const NodeBird = ({ Component, store }) => {
+	return (
+		<Provider store={store}>
+			<Head>
+				<title>NodeBird</title>
+				<link
+					rel="stylesheet"
+					href="https://cdnjs.cloudflare.com/ajax/libs/antd/3.18.1/antd.css"
+				/>
+			</Head>
+			<AppLayout>
+				<Component />
+			</AppLayout>
+		</Provider>
+	);
+};
+
+NodeBird.propTypes = {
+	Component: PropTypes.elementType,
+	store: Proptypes.object
+};
+export default withRedux((initialState, options) => {
+	const store = createStore(reducer, initialState);
+	//store 커스터마이징
+	return store;
+})(NodeBird);
+```
+
+-   `default`에서 `return state`가 아니라 `return {...state}`를 하는 이유 - 리덕스에서 액션이 하나 실행되면 원칙적으로 새로운 스테이트를 생성해서 반환해줘야하기 때문 - `default`가 별 의미없기 때문에 사실상 큰 의미는 없다
