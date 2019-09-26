@@ -356,28 +356,29 @@ const Home = () => {
   const {
     mainPosts
   } = Object(react_redux__WEBPACK_IMPORTED_MODULE_3__["useSelector"])(state => state.post);
+  const dispatch = Object(react_redux__WEBPACK_IMPORTED_MODULE_3__["useDispatch"])();
   return __jsx("div", {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 11
+      lineNumber: 12
     },
     __self: undefined
   }, user ? __jsx("div", {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 13
+      lineNumber: 14
     },
     __self: undefined
   }, "\uB85C\uADF8\uC778\uD588\uC2B5\uB2C8\uB2E4 : ", user.nickname) : __jsx("div", {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 15
+      lineNumber: 16
     },
     __self: undefined
   }, "\uB85C\uADF8\uC544\uC6C3\uD588\uC2B5\uB2C8\uB2E4"), isLoggedIn && __jsx(_components_PostForm__WEBPACK_IMPORTED_MODULE_1__["default"], {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 17
+      lineNumber: 18
     },
     __self: undefined
   }), mainPosts.map(c => {
@@ -386,7 +387,7 @@ const Home = () => {
       post: c,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 19
+        lineNumber: 20
       },
       __self: undefined
     });

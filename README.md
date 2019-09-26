@@ -1765,8 +1765,6 @@ export default connect(
 
 -   너무 잘게 쪼개면 코드가 장황해지니 재량껏
 
--   각 컴포넌트에 있는 더미데이터를 리덕스로 옮긴다
-
 ```js
 const { user, isLoggedIn } = useSelector(state => state.user);
 ```
@@ -1777,6 +1775,8 @@ vs
 const user = useSelector(state => state.user.user);
 const isLoggedIn = useSelector(state => state.user.isLoggedIn);
 ```
+
+-   각 컴포넌트에 있는 더미데이터를 리덕스로 옮긴다
 
 ```js
 //redux/post.js
@@ -2350,3 +2350,504 @@ export default reducer;
 -   일반적으로 리액트 스테이트와 리덕스 스테이트는 같이 쓰게 된다.
     -   리덕스 스테이트로만 만들 수 있지만 매우 번거롭기 때문에 사소한 스테이트는 리액트에서 관리
     -   서버와 통신하거나 여러 컴포넌트가 쓰는 스테이트만 리덕스로 관리
+
+# 3. 리덕스 사가
+
+## 3.1. 리덕스 사가 맛보기
+
+-   리덕스는 특정 시간, 특정 동작 이후에 액션을 실행하는 것이 불가능 - 즉 서버에 data를 전달하고, 서버에서 로그인 성공 이라는 응답을 반환하고, 그걸 받아서 로그인 하는 것이 리덕스만으로는 불가능 - `middleware`를 활용해 리덕스 기능을 확장해야한다. - `redux-thunk`: 쉽지만 기능이 제한적이므로 `redux-saga`를 활용
+
+-   `npm i redux-saga`
+
+-   function\* generator(){} - generator: 함수 실행을 중간에 멈추거나 재개할 수 있다 - 무한의 개념 - 비동기
+
+```js
+//sagas/index.js
+import { all, call } from "redux-saga/effects";
+import user from "./user";
+import post from "./post";
+
+export default function* rootSaga() {
+	yield all([call(user), call(post)]);
+}
+```
+
+```js
+//sagas/user.js
+import { all, fork } from "redux-saga/effects";
+import { LOG_IN, LOG_IN_FAILURE, LOG_IN_SUCCESS } from "../reducers/user";
+
+function loginAPI() {
+	//서버에 요청을 보낸다
+}
+
+function* login() {
+	try {
+		yield call(loginAPI);
+		yield put({
+			// put은 dispatch와 동일
+			// loginAPI 성공 시 실행
+			type: LOG_IN_SUCCESS
+		});
+	} catch (e) {
+		// loginAPI 실패 시 실행
+		console.error(e);
+		yield put({
+			type: LOG_IN_FAILURE
+		});
+	}
+}
+function* watchLogin() {
+	yield takeLatest(LOG_IN, login);
+}
+export default function* userSaga() {
+	yield all([fork(watchLogin)]);
+}
+```
+
+```js
+//sagas/post.js
+import { all } from "redux-saga/effects";
+
+export default function* postSaga() {
+	yield all([]);
+}
+```
+
+## 3.2. 리덕스와 리덕스사가 연결하기
+
+```js
+//pages/_app.js
+import createSagaMiddleware from 'redux-saga'
+import rootSaga from '../sagas'
+
+...
+
+const configureStore = (initialState, options) => {
+	const sagaMiddleware = createSagaMiddleware();
+	const middlewares = [sagaMiddleware];
+	const enhancer =
+		process.env.NODE_ENV === "production"
+			? compose(applyMiddleware(...middlewares))
+			: compose(
+					applyMiddleware(...middlewares),
+					!options.isServer &&
+						typeof window.__REDUX_DEVTOOLS_EXTENSION__ !==
+							"undefined"
+						? window.__REDUX_DEVTOOLS_EXTENSION__()
+						: f => f
+			  );
+	const store = createStore(reducer, initialState, enhancer);
+	sagaMiddleware.run(rootSaga);
+	return store;
+};
+
+export default withRedux(configureStore)(NodeBird);
+```
+
+-   배포할 때는 `window.__REDUX_DEVTOOLS_EXTENSION__`를 제외한다
+
+```js
+const enhancer =
+	process.env.NODE_ENV === "production"
+		? compose(applyMiddleware(...middlewares))
+		: compose(
+				applyMiddleware(...middlewares),
+				!options.isServer &&
+					typeof window.__REDUX_DEVTOOLS_EXTENSION__ !== "undefined"
+					? window.__REDUX_DEVTOOLS_EXTENSION__()
+					: f => f
+		  );
+```
+
+-   `middleware`의 구조
+
+```js
+const middleware = store => next => action => {
+	console.log(action);
+	next(action);
+};
+```
+
+## 3.3. 제네레이터
+
+```js
+function* generator() {
+	console.log(1);
+	console.log(2);
+	yield 5;
+	console.log(3);
+}
+const gen = generator();
+gen.next();
+```
+
+-   `next()` 로 제네레이터를 실행하고 `yield`에서 멈추고 `yield`값을 `value`로 반환한다.
+
+    -   `next()`를 다시 입력하면 `yield` 다음부분부터 실행한다.
+
+-   `yield* [1, 2, 3, 4, 5]`: yield값을 반복문으로 반환(1, 2, 3, 4, 5 차례대로)
+
+-   제네레이터에서는 무한반복문이 사용 가능하다.
+
+```js
+//무한 반복문
+function* generator() {
+	let i = 0;
+	while (true) {
+		yield i++;
+	}
+}
+```
+
+## 3.4. 리덕스 사가의 제네레이터
+
+-   사가: `next`를 이펙트에 따라서 실행해주는 제네레이터
+-   take: 해당 액션이 디스패치되면 제네레이터를 넥스트하는 이펙트
+
+```js
+const HELLO_SAGA = "HELLO_SAGA";
+
+...
+
+function* helloSaga() {
+	console.log("before saga");
+	while(true){
+		yield take(HELLO_SAGA);
+		console.log("hello saga");
+	}
+}
+export default function* userSaga() {
+	yield helloSaga()
+}
+```
+
+-   HELLO_SAGA 액션이 들어오면 next를 실행
+-   saga액션의 경우 리덕스데브툴이 아니라 컴포넌트에서 직접 디스패치해야 한다
+-   각각을 디스패치했을 때, 넥스트가 한번 실행되고 해당 제네레이터는 끝나기 때문에, 반복해서 실행하고 싶다면, 무한반복문을 이용해 같은 액션을 수행한다.
+
+*   액션을 여러개 등록하고 싶다면 `all`을 사용한다
+
+```js
+export default function* userSaga() {
+	yield all([
+		helloSaga(),
+		watchLogin(),
+		watchSignUp()
+}
+```
+
+## 3.5. 사가에서 반복문 제어하기
+
+-   액션의 반복문
+
+```js
+function* helloSaga() {
+	console.log("before saga");
+	for (let i = 0; i < 5; i++) {
+		yield take(HELLO_SAGA);
+		console.log("hello saga");
+	}
+}
+export default function* userSaga() {
+	yield helloSaga();
+}
+```
+
+-   사가를 이용해서 버튼에 대한 이벤트리스너의 사용횟수를 제어할 수 있다
+
+    -   사가에서 동작하지 않아도 리듀서는 동작함
+
+-   로그인 이후 로그인 석세스를 반환
+
+```js
+function* watchLogin() {
+	yield take(LOG_IN);
+	yield put({
+		type: LOG_IN_SUCCESS
+	});
+}
+
+export default function* userSaga() {
+	yield all(watchLogin())]);
+}
+```
+
+-   첫로그인에만 로그인 석세스를 반환하므로 반복문을 넣어준다
+
+```js
+function* watchLogin() {
+	while (true) {
+		yield take(LOG_IN);
+		yield put({
+			type: LOG_IN_SUCCESS
+		});
+	}
+}
+
+export default function* userSaga() {
+	yield all([watchLogin()]);
+}
+```
+
+-   로그인 후 딜레이를 주고 로그인 석세스를 반환하도록 할 수도 있다.
+
+```js
+function* watchLogin() {
+	while (true) {
+		yield take(LOG_IN);
+		yield delay(2000);
+		yield put({
+			type: LOG_IN_SUCCESS
+		});
+	}
+}
+
+export default function* userSaga() {
+	yield all([watchLogin()]);
+}
+```
+
+-   대부분의 경우 `while(true)`를 사용하게 된다
+    -   때문에 `takeLatest`, `takeEvery`를 도입한다
+
+## 3.6. takeEvery, takeLatest
+
+```js
+function* watchLogin() {
+	while (true) {
+		yield take(LOG_IN);
+		yield put({
+			type: LOG_IN_SUCCESS
+		});
+	}
+}
+```
+
+```js
+function* watchLogin() {
+	yield takeEvery(LOG_IN, function*() {
+		yield put({
+			type: LOG_IN_SUCCESS
+		});
+	});
+}
+```
+
+-   `takeEvery`는 `while(true)`와 동일
+-   `takeLatest`는 `takeEvery`와 비슷해보이지만, 동시에 들어오는 액션의 경우 마지막 액션만 받는다
+    -   끝나지 않은 이전 요청이 있다면, 이전 요청을 취소한다
+    -   같은 버튼을 연속적으로 누를 경우, 해당 액션을 마지막 한번만 받을 수 있다.
+
+## 3.7. fork, call, 사가 총정리
+
+-   fork: 동기 / call: 비동기 요청
+
+```js
+function loginAPI() {
+	//서버에 요청을 보내는 부분
+}
+function* login() {
+	try {
+		yield call(loginAPI);
+		yield put({
+			type: LOG_IN_SUCCESS
+		});
+	} catch (e) {
+		console.error(e);
+		yield put({
+			type: LOG_IN_FAILURE
+		});
+	}
+}
+function* watchLogin() {
+	yield takeEvery(LOG_IN, login);
+}
+
+export default function* userSaga() {
+	yield all([fork(watchLogin)]);
+}
+```
+
+-   기타: `race`, `cancel`, `select`, `throttle`, `debounce`
+
+## 3.8. 사가 패턴과 Q&A
+
+-   비동기 액션의 경우 석세스, 페일리어, 리퀘스트를 나눠주는게 편하다
+
+```js
+export const SIGN_UP_REQUEST = "SIGN_UP_REQUEST"; //action의 이름
+export const SIGN_UP_SUCCESS = "SIGN_UP_SUCCESS";
+export const SIGN_UP_FAILURE = "SIGN_UP_FAILURE";
+
+export const LOG_IN_REQUEST = "LOG_IN_REQUEST";
+export const LOG_IN_SUCCESS = "LOG_IN_SUCCESS";
+export const LOG_IN_FAILURE = "LOG_IN_FAILURE";
+
+export const LOG_OUT_REQUEST = "LOG_OUT_REQUEST";
+export const LOG_OUT_SUCCESS = "LOG_OUT_SUCCESS";
+export const LOG_OUT_FAILURE = "LOG_OUT_FAILURE";
+```
+
+-   로그인 요청(리퀘스트) 중에 로딩 처리를 한다
+
+```js
+const reducer = (state = initialState, action) => {
+	switch (action.type) {
+		case LOG_IN_REQUEST: {
+			return {
+				...state,
+				loginData: action.data,
+				isLoading: true
+			};
+		}
+		case LOG_IN_SUCCESS: {
+			return {
+				...state,
+				isLoggedIn: true,
+				user: dummyUser,
+				isLoading: false
+			};
+		}
+		case LOG_OUT_REQUEST: {
+			return {
+				...state,
+				isLoggedIn: false,
+				user: null
+			};
+		}
+		case SIGN_UP_REQUEST: {
+			return {
+				...state,
+				signUpData: action.data
+			};
+		}
+		default: {
+			return {
+				...state
+			};
+		}
+	}
+};
+```
+
+-   try~catch: 에러 났을 경우 앱을 보호하고 요청이 실패했을 경우의 처리를 위해 사용
+
+```js
+try {
+	JSON.parse(undefined);
+} catch (e) {
+	console.error(e);
+	console.log("에러났지만 죽지 않음");
+}
+```
+
+-   사가 대신 코드 자체에서 비동기처리
+
+```js
+useEffect(aync()=>{
+	dispatch({
+		type: LOG_IN_REQUEST
+	})
+	await axios.post('/login', ()=>{
+		dispatch({
+			type: LOG_IN_SUCCESS
+		})
+	})
+}, [])
+```
+
+-   문제점: 이 경우 해당 코드를 재사용할 수 없다
+
+## 3.9. eslint-config-airbnb 적용하기
+
+`npm i -D eslint-config-airbnb`
+
+```js
+//.eslintrc
+{
+	"parserOptions": {
+		"ecmaVersion": 2018,
+		"sourceType": "module",
+		"ecmaFeatures": {
+			"jsx": true
+		}
+	},
+	"env": {
+		"browser": true,
+		"node": true
+	},
+	"extends": ["airbnb"],
+	"plugins": ["import", "react-hooks"]
+}
+```
+
+`npm i -D eslint-plugin-jsx-a11y`
+
+-   예외처리
+
+```js
+//.eslintrc
+"rules": {
+        "no-underscore-danlge": "off"
+	}
+```
+
+-   바벨 최신 문법을 사용한다면
+
+`npm i -D babel-eslint`
+
+```js
+//.eslintrc 전체
+{
+	"parser": "babel-eslint",
+	"parserOptions": {
+		"ecmaVersion": 2018,
+		"sourceType": "module",
+		"ecmaFeatures": {
+			"jsx": true
+		}
+	},
+	"env": {
+		"browser": true,
+		"node": true,
+		"es6": true
+	},
+	"extends": ["airbnb", "plugin:prettier/recommended"],
+	"plugins": ["import", "react-hooks"],
+	"rules": {
+		"no-underscore-danlge": "off"
+	}
+}
+```
+- `npm i -g eslint`
+- `eslint --init`
+
+```js
+//.eslintrc.js
+module.exports = {
+	env: {
+		browser: true,
+		node: true,
+		es6: true
+	},
+	extends: ["airbnb"],
+	globals: {
+		Atomics: "readonly",
+		SharedArrayBuffer: "readonly"
+	},
+	parser: "babel-eslint",
+	parserOptions: {
+		ecmaFeatures: {
+			jsx: true
+		},
+		ecmaVersion: 2018,
+		sourceType: "module"
+	},
+	plugins: ["react", "import", "react-hooks"],
+	rules: {
+    "no-underscore-dangle": "off",
+    "react/forbid-prop-types": "off"
+	}
+};
+```js
