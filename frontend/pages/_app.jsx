@@ -28,7 +28,6 @@ const NodeBird = ({ Component, store }) => {
 
 NodeBird.propTypes = {
 	Component: PropTypes.elementType.isRequired,
-	store: PropTypes.object.isRequired
 };
 
 const configureStore = (initialState, options) => {
